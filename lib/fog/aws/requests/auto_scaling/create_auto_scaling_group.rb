@@ -47,6 +47,9 @@ module Fog
         #         tag is applied. Currently, Auto Scaling supports the
         #         auto-scaling-group resource type.
         #       * 'Value'<~String>: The value of the tag.
+        #   * or 'Tags'<~Hash>:
+        #     * key<~String> - The key of the tag.
+        #     * value<~String> - The value of the tag.
         #   * 'TerminationPolicies'<~Array> - A standalone termination policy
         #     or a list of termination policies used to select the instance to
         #     terminate. The policies are executed in the order that they are
@@ -74,9 +77,17 @@ module Fog
           end
           
           if tags = options.delete('Tags')
-            tags.each_with_index do |(key, value), i|
-              options["Tags.member.#{i+1}.Key"] = key.to_s # turns symbol into string
-              options["Tags.member.#{i+1}.Value"] = value
+            if tags.is_a? Hash
+              tags.each_with_index do |(key, value), i|
+                options["Tags.member.#{i+1}.Key"] = key.to_s # turns symbol into string
+                options["Tags.member.#{i+1}.Value"] = value
+              end
+            else
+              tags.each_with_index do |tag, i|
+                tag.each do |key, value|
+                  options["Tags.member.#{i+1}.#{key}"] = value unless value.nil?
+                end
+              end
             end
           end
           if termination_policies = options.delete('TerminationPolicies')
